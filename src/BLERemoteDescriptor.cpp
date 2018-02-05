@@ -54,6 +54,64 @@ BLEUUID BLERemoteDescriptor::getUUID() {
 	return m_uuid;
 } // getUUID
 
+void BLERemoteDescriptor::gattClientEventHandler(
+	esp_gattc_cb_event_t      event,
+	esp_gatt_if_t             gattc_if,
+	esp_ble_gattc_cb_param_t* evtParam) {
+	switch(event) {
+
+		//
+		// ESP_GATTC_READ_DESCR_EVT
+		// This event indicates that the server has responded to the read request.
+		//
+		// read:
+		// - esp_gatt_status_t  status
+		// - uint16_t           conn_id
+		// - uint16_t           handle
+		// - uint8_t*           value
+		// - uint16_t           value_len
+	  //
+		case ESP_GATTC_READ_DESCR_EVT: {
+			// If this event is not for us, then nothing further to do.
+			if (evtParam->read.handle != getHandle()) {
+				break;
+			}
+
+			// At this point, we have determined that the event is for us, so now we save the value
+			// and unlock the semaphore to ensure that the requestor of the data can continue.
+			if (evtParam->read.status == ESP_GATT_OK) {
+				m_value = std::string((char*)evtParam->read.value, evtParam->read.value_len);
+			} else {
+				m_value = "";
+			}
+
+			m_semaphoreReadDescrEvt.give();
+			break;
+		} // ESP_GATTC_READ_DESCR_EVT
+		//
+		// ESP_GATTC_WRITE_DESCR_EVT
+		//
+		// write:
+		// - esp_gatt_status_t status
+		// - uint16_t          conn_id
+		// - uint16_t          handle
+		//
+		case ESP_GATTC_WRITE_DESCR_EVT: {
+			// Determine if this event is for us and, if not, pass onwards.
+			if (evtParam->write.handle != getHandle()) {
+				break;
+			}
+
+			// There is nothing further we need to do here.  
+			// This is merely an indication that the write has completed 
+			break;
+		} // ESP_GATTC_WRITE_DESCR_EVT
+
+		default: {
+			break;
+		}
+	} // End switch
+}; // gattClientEventHandler
 
 std::string BLERemoteDescriptor::readValue(void) {
 	ESP_LOGD(LOG_TAG, ">> readValue: %s", toString().c_str());
