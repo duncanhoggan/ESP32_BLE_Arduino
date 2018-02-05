@@ -43,6 +43,12 @@ private:
 		BLEUUID                  uuid,
 		BLERemoteCharacteristic* pRemoteCharacteristic
 	);
+	
+	void gattClientEventHandler(
+		esp_gattc_cb_event_t      event,
+		esp_gatt_if_t             gattc_if,
+		esp_ble_gattc_cb_param_t* evtParam);
+	
 	uint16_t                 m_handle;                  // Server handle of this descriptor.
 	BLEUUID                  m_uuid;                    // UUID of this descriptor.
 	std::string              m_value;                   // Last received value of the descriptor.
