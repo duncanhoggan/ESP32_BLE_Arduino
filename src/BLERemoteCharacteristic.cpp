@@ -274,6 +274,10 @@ void BLERemoteCharacteristic::gattClientEventHandler(
 			break;
 		}
 	} // End switch
+	// Send the event to each of the descriptors owned by this service.
+	for (auto &myPair : m_descriptorMap) {
+	   myPair.second->gattClientEventHandler(event, gattc_if, evtParam);
+	}
 }; // gattClientEventHandler
 
 
